@@ -5,7 +5,7 @@
  * A dynamic, browser-based visualization library.
  *
  * @version 0.0.0-no-version
- * @date    2019-09-06T16:52:31Z
+ * @date    2025-02-26T10:17:52Z
  *
  * @copyright (c) 2011-2017 Almende B.V, http://almende.com
  * @copyright (c) 2018-2019 visjs contributors, https://github.com/visjs
@@ -25692,7 +25692,8 @@ function (_CircleImageBase) {
   }, {
     key: "draw",
     value: function draw(ctx, x, y, selected, hover, values) {
-      this.switchImages(selected);
+      var useAlt = selected || hover;
+      this.switchImages(useAlt);
       this.resize();
       this.left = x - this.width / 2;
       this.top = y - this.height / 2;
@@ -35612,6 +35613,7 @@ function () {
       var nodeIndices = this.body.nodeIndices;
       var node;
       var selected = [];
+      var nodeIndicesByZIndex = {};
       var margin = 20;
       var topLeft = this.canvas.DOMtoCanvas({
         x: -margin,
@@ -35626,13 +35628,77 @@ function () {
         left: topLeft.x,
         bottom: bottomRight.y,
         right: bottomRight.x
-      }; // draw unselected nodes;
+      };
 
       for (var i = 0; i < nodeIndices.length; i++) {
-        node = nodes[nodeIndices[i]]; // set selected nodes aside
+        node = nodes[nodeIndices[i]];
+
+        if (node.options.zIndex) {
+          // ignore 0
+          nodeIndicesByZIndex[node.options.zIndex] = nodeIndicesByZIndex[node.options.zIndex] || [];
+          nodeIndicesByZIndex[node.options.zIndex].push(nodeIndices[i]);
+        }
+      }
+
+      var zIndices = Object.keys(nodeIndicesByZIndex).sort(); // draw nodes with zIndex smaller than 0
+      // so they are below nodes without zIndex (or zIndex: 0, which is ignored)
+      // nodes with the same zIndex value will be drawn in the order they appear in nodeIndices
+
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = zIndices[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var index = _step.value;
+          if (index > 0) continue;
+          var _iteratorNormalCompletion3 = true;
+          var _didIteratorError3 = false;
+          var _iteratorError3 = undefined;
+
+          try {
+            for (var _iterator3 = nodeIndicesByZIndex[index][Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+              var _i3 = _step3.value;
+              var _node = nodes[_i3];
+
+              _node.draw(ctx);
+            }
+          } catch (err) {
+            _didIteratorError3 = true;
+            _iteratorError3 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion3 && _iterator3.return != null) {
+                _iterator3.return();
+              }
+            } finally {
+              if (_didIteratorError3) {
+                throw _iteratorError3;
+              }
+            }
+          }
+        } // draw unselected nodes;
+
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return != null) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      for (var _i = 0; _i < nodeIndices.length; _i++) {
+        node = nodes[nodeIndices[_i]]; // set selected nodes aside
 
         if (node.isSelected()) {
-          selected.push(nodeIndices[i]);
+          selected.push(nodeIndices[_i]);
         } else {
           if (alwaysShow === true) {
             node.draw(ctx);
@@ -35645,9 +35711,61 @@ function () {
       } // draw the selected nodes on top
 
 
-      for (var _i = 0; _i < selected.length; _i++) {
-        node = nodes[selected[_i]];
+      for (var _i2 = 0; _i2 < selected.length; _i2++) {
+        node = nodes[selected[_i2]];
         node.draw(ctx);
+      } // draw nodes with zIndex greater than 0
+      // so they on top of nodes without zIndex (or zIndex: 0, which is ignored)
+      // nodes with the same zIndex value will be drawn in the order they appear in nodeIndices
+
+
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
+
+      try {
+        for (var _iterator2 = zIndices[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var _index = _step2.value;
+          if (_index <= 0) continue;
+          var _iteratorNormalCompletion4 = true;
+          var _didIteratorError4 = false;
+          var _iteratorError4 = undefined;
+
+          try {
+            for (var _iterator4 = nodeIndicesByZIndex[_index][Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+              var _i4 = _step4.value;
+              var _node2 = nodes[_i4];
+
+              _node2.draw(ctx);
+            }
+          } catch (err) {
+            _didIteratorError4 = true;
+            _iteratorError4 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion4 && _iterator4.return != null) {
+                _iterator4.return();
+              }
+            } finally {
+              if (_didIteratorError4) {
+                throw _iteratorError4;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+            _iterator2.return();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
       }
     }
     /**
@@ -38323,11 +38441,18 @@ function () {
         var nodeId = this.body.nodeIndices[i];
 
         if (nodes[nodeId].isOverlappingWith(object)) {
-          overlappingNodes.push(nodeId);
+          overlappingNodes.push(nodes[nodeId]);
         }
       }
 
-      return overlappingNodes;
+      overlappingNodes.sort(function (a, b) {
+        var zIndexA = a.options.zIndex || 0;
+        var zIndexB = b.options.zIndex || 0;
+        return zIndexA <= zIndexB ? -1 : 1;
+      });
+      return overlappingNodes.map(function (n) {
+        return n.id;
+      });
     }
     /**
      * Return a position object in canvasspace from a single point in screenspace
